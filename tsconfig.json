@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "target": "ES2022",
+
+    "module": "ESNext",
+
+    "moduleResolution": "Node",
+
+    "strict": true,
+
+    "noImplicitAny": true,
+
+    "strictNullChecks": true,
+
+    "strictPropertyInitialization": true,
+
+    "noUnusedLocals": true,
+
+    "noUnusedParameters": true,
+
+    "esModuleInterop": true,
+
+    "sourceMap": true,
+
+    "skipLibCheck": true,
+
+    "baseUrl": "./src",
+
+    "paths": {
+      "@/*": ["*"]
+    }
+  },
+
+  "include": ["src"]
+}
