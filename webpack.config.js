@@ -1,13 +1,18 @@
 // Node.js модуль для работы с путями
-const path = require("path");
+import path from "path";
+import { fileURLToPath } from 'url';
 // Подключит получившийся bundle.js в HTML
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+import HtmlWebpackPlugin from "html-webpack-plugin";
 // Перед каждой сборкой удаляет папку dist
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+import { CleanWebpackPlugin } from "clean-webpack-plugin";
 
-module.exports = {
+// Получаем __dirname в ES модулях
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default {
   mode: "development",
-  // Начинает аналз зависимостей отсюда
+  // Начинает анализ зависимостей отсюда
   entry: "./src/index.ts",
 
   output: {
@@ -29,7 +34,7 @@ module.exports = {
         test: /\.ts$/,
         // Webpack не должен перекомпилировать библиотеки
         exclude: /node_modules/,
-        // Engine.ts ↓ Engine.js
+        // Engine.ts → Engine.js
         use: "ts-loader",
       },
 
@@ -46,7 +51,7 @@ module.exports = {
       template: "./public/index.html",
       title: "WebGL Showcase",
     }),
-    // При каждом запуске удаляет страрые бандлы
+    // При каждом запуске удаляет старые бандлы
     new CleanWebpackPlugin(),
   ],
 
