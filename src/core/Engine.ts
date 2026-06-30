@@ -19,6 +19,8 @@ export class Engine {
 
     this.resize();
     this.clear();
+
+    this.gameLoop();
   }
 
   private resize(): void {
@@ -29,11 +31,12 @@ export class Engine {
   }
 
   private clear(): void {
-    // Устанавливает цвет, которым будет очищен экран (RGBA)
-    // Значения от 0.0 до 1.0:
-    // R = красный, G = зелёный, B = синий, A = прозрачность (альфа)
     this.gl.clearColor(0.1, 0.1, 0.15, 1.0);
-    // Очищает цветовой буфер кадра, заполняя его цветом, заданным выше
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  }
+
+  private gameLoop(): void {
+    this.clear();
+    requestAnimationFrame(() => this.gameLoop());
   }
 }
