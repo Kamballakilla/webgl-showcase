@@ -1,19 +1,28 @@
 #ui {
-  position: absolute;
-  top: 10px;
-  left: 10px;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 10;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px 15px;
   border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
 .control-group {
-  margin: 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 .control-group input {
-  width: 80px;
-  margin-right: 5px;
+  width: 85px;
+  padding: 4px;
 }
 button {
-  margin: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
 }

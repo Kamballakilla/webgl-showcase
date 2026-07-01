@@ -24,29 +24,33 @@ export class UIController {
 
     // Добавить круг с заданными параметрами
     document.getElementById("addCustom")?.addEventListener("click", () => {
-      const radius =
-        parseFloat(
-          (document.getElementById("radius") as HTMLInputElement).value,
-        ) || 20;
-      const velX =
-        parseFloat(
-          (document.getElementById("velX") as HTMLInputElement).value,
-        ) || 0;
-      const velY =
-        parseFloat(
-          (document.getElementById("velY") as HTMLInputElement).value,
-        ) || 0;
+      const radiusInput = document.getElementById("radius") as HTMLInputElement;
+      const velXInput = document.getElementById("velX") as HTMLInputElement;
+      const velYInput = document.getElementById("velY") as HTMLInputElement;
 
-      // Случайная позиция внутри границ (с учётом радиуса)
+      const radius = parseFloat(radiusInput.value);
+      const velX = parseFloat(velXInput.value);
+      const velY = parseFloat(velYInput.value);
+
+      if (isNaN(radius) || radius <= 0) {
+        alert("Радиус должен быть положительным числом!");
+        return;
+      }
+
       const maxX = window.innerWidth - radius * 2;
       const maxY = window.innerHeight - radius * 2;
+      if (maxX < 0 || maxY < 0) {
+        alert("Слишком большой радиус для текущей области!");
+        return;
+      }
+
       const x = radius + Math.random() * maxX;
       const y = radius + Math.random() * maxY;
 
       const circle = new Circle({
         radius,
         position: new Vector2(x, y),
-        velocity: new Vector2(velX, velY),
+        velocity: new Vector2(isNaN(velX) ? 0 : velX, isNaN(velY) ? 0 : velY),
         color: [
           Math.random() * 0.6 + 0.4,
           Math.random() * 0.6 + 0.4,
@@ -71,7 +75,7 @@ export class UIController {
           const state = JSON.parse(saved);
           this.engine.setState(state);
         } catch (e) {
-          alert("Ошибка при загрузке состояния");
+          alert(`Ошибка при загрузке состояния ${e}`);
         }
       } else {
         alert("Нет сохранённого состояния");
