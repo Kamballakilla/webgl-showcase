@@ -207,4 +207,19 @@ export class Engine {
     this.canvas.height = height;
     this.gl.viewport(0, 0, width, height);
   }
+
+  /**
+   * Возвращает текущее состояние всех кругов в виде массива объектов.
+   */
+  public getState(): object[] {
+    return this.circles.map((c) => c.toJSON());
+  }
+
+  /**
+   * Загружает состояние из массива объектов (как от getState).
+   * Полностью заменяет текущие круги.
+   */
+  public setState(state: object[]): void {
+    this.circles = state.map((data: unknown) => Circle.fromJSON(data));
+  }
 }

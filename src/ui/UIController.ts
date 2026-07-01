@@ -55,5 +55,27 @@ export class UIController {
       });
       this.engine.addCircle(circle);
     });
+
+    // Сохранить состояние в localStorage
+    document.getElementById("saveState")?.addEventListener("click", () => {
+      const state = this.engine.getState();
+      localStorage.setItem("circleSimState", JSON.stringify(state));
+      alert("Состояние сохранено!");
+    });
+
+    // Загрузить состояние из localStorage
+    document.getElementById("loadState")?.addEventListener("click", () => {
+      const saved = localStorage.getItem("circleSimState");
+      if (saved) {
+        try {
+          const state = JSON.parse(saved);
+          this.engine.setState(state);
+        } catch (e) {
+          alert("Ошибка при загрузке состояния");
+        }
+      } else {
+        alert("Нет сохранённого состояния");
+      }
+    });
   }
 }
