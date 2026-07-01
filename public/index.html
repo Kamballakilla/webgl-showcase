@@ -3,11 +3,41 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>WebGL Showcase</title>
   </head>
 
-  <body></body>
+  <body>
+    <div id="ui">
+      <div class="control-group">
+        <button id="addRandom">Добавить случайный</button>
+        <button id="clearAll">Очистить все</button>
+      </div>
+      <div class="control-group">
+        <input
+          type="number"
+          id="radius"
+          placeholder="Радиус"
+          value="20"
+          min="5"
+          step="1"
+        />
+        <input
+          type="number"
+          id="velX"
+          placeholder="Скорость X"
+          value="100"
+          step="10"
+        />
+        <input
+          type="number"
+          id="velY"
+          placeholder="Скорость Y"
+          value="50"
+          step="10"
+        />
+        <button id="addCustom">Добавить с параметрами</button>
+      </div>
+    </div>
+  </body>
 </html>

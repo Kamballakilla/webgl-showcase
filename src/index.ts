@@ -1,8 +1,12 @@
 import { Engine } from "@/core/Engine";
 import { Circle } from "@/entities/Circle";
 import { Vector2 } from "@/math/Vector2";
+import { UIController } from "./ui/UIController";
+import './styles.css';
 
 const engine = new Engine();
+
+new UIController(engine);
 
 const circle = new Circle({
   radius: 50,
@@ -12,7 +16,11 @@ const circle = new Circle({
 });
 engine.addCircle(circle);
 
-engine.addCircle(Circle.random({ width: window.innerWidth, height: window.innerHeight }));
-engine.addCircle(Circle.random({ width: window.innerWidth, height: window.innerHeight }));
+engine.addCircle(
+  Circle.random({ width: window.innerWidth, height: window.innerHeight }),
+);
+engine.addCircle(
+  Circle.random({ width: window.innerWidth, height: window.innerHeight }),
+);
 
 engine.start();
