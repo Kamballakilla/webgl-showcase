@@ -19,6 +19,14 @@ export class Engine {
 
   public constructor() {
     this.canvas = document.createElement("canvas");
+    // Центрируем canvas и задаём фон, чтобы он выделялся
+    this.canvas.style.position = "absolute";
+    this.canvas.style.top = "50%";
+    this.canvas.style.left = "50%";
+    this.canvas.style.transform = "translate(-50%, -50%)";
+    this.canvas.style.backgroundColor = "#1a1a2e"; // тёмный фон игровой области
+    this.canvas.style.border = "2px solid #4a4a6a"; // рамка
+    this.canvas.style.boxShadow = "0 0 20px rgba(0,0,0,0.5)";
 
     const gl = this.canvas.getContext("webgl2");
 
@@ -176,9 +184,11 @@ export class Engine {
 
   /** Подгоняет размер canvas под окно браузера */
   private resize(): void {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-
-    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    // Занимаем 80% ширины и высоты окна (площадь 64% > 50%)
+    const width = window.innerWidth * 0.8;
+    const height = window.innerHeight * 0.8;
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.gl.viewport(0, 0, width, height);
   }
 }
