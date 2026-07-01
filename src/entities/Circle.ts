@@ -203,20 +203,62 @@ export class Circle {
       color,
     });
   }
+
+  /**
+   * Отрисовывает круг с использованием переданных WebGL‑ресурсов.
+   * Геометрия круга (32 сегмента) берётся из общего vertexBuffer,
+   * цветовой буфер создаётся каждый кадр заново.
+   * @param gl WebGL2‑контекст.
+   * @param program Шейдерная программа.
+   * @param vertexBuffer Буфер с геометрией круга (центр + точки окружности).
+   */
+  // TODO: Выделить общий colorBuffer
+  public draw(
+    gl: WebGL2RenderingContext,
+    program: WebGLProgram,
+    vertexBuffer: WebGLBuffer,
+  ): void {
+    const segments = 32;
+    const color = this.color;
+
+    // Цветовой буфер (центр + точки окружности)
+    const colors: number[] = [];
+    colors.push(color[0], color[1], color[2]); // центр
+    for (let i = 0; i <= segments; i++) {
+      colors.push(color[0], color[1], color[2]);
+    }
+
+    const colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
+
+    gl.useProgram(program);
+
+    // Позиция (общая геометрия)
+    const posLoc = gl.getAttribLocation(program, "a_position");
+    gl.enableVertexAttribArray(posLoc);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+    // Цвет
+    const colLoc = gl.getAttribLocation(program, "a_color");
+    gl.enableVertexAttribArray(colLoc);
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.vertexAttribPointer(colLoc, 3, gl.FLOAT, false, 0, 0);
+
+    // Uniforms
+    const resLoc = gl.getUniformLocation(program, "u_resolution");
+    const transLoc = gl.getUniformLocation(program, "u_translation");
+    const scaleLoc = gl.getUniformLocation(program, "u_scale");
+
+    gl.uniform2f(resLoc, gl.canvas.width, gl.canvas.height);
+    gl.uniform2f(transLoc, this.position.x, this.position.y);
+    gl.uniform1f(scaleLoc, this.radius);
+
+    // Отрисовка
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, segments + 2);
+
+    // Очистка временного буфера цветов
+    gl.deleteBuffer(colorBuffer);
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,13 +1,21 @@
 import { Circle } from "@/entities/Circle";
-import { Vector2 } from "@/math/Vector2";
-
+/**
+ * Основной движок симуляции.
+ * Управляет WebGL‑контекстом, геометрией, циклом обновления/отрисовки и массивом кругов.
+ */
 export class Engine {
   private readonly canvas: HTMLCanvasElement;
   private readonly gl: WebGL2RenderingContext;
-  private testCircle: Circle | null = null;
-
+  /** Шейдерная программа (собирается один раз) */
   private program: WebGLProgram | null = null;
+  /** Общий буфер геометрии круга (центр + 32 сегмента) */
   private vertexBuffer: WebGLBuffer | null = null;
+
+  /** Массив всех кругов в симуляции */
+  private circles: Circle[] = [];
+
+  /** Время предыдущего кадра (мс) для вычисления deltaTime */
+  private lastTime: number = 0;
 
   public constructor() {
     this.canvas = document.createElement("canvas");
@@ -19,18 +27,11 @@ export class Engine {
     }
 
     this.gl = gl;
-
-    this.testCircle = new Circle({
-      radius: 50,
-      position: new Vector2(400, 300),
-      velocity: new Vector2(0, 0),
-      color: [0.2, 0.8, 0.3],
-    });
-
     this.initShaders();
     this.initBuffers();
   }
 
+  /** Компилирует шейдеры и линкует программу */
   private initShaders(): void {
     // Вершинный шейдер
     const vertexShader = this.createShader(
@@ -79,23 +80,7 @@ export class Engine {
     }
   }
 
-  private createShader(type: number, source: string): WebGLShader {
-    const shader = this.gl.createShader(type);
-    if (!shader) {
-      throw new Error("Failed to create shader");
-    }
-
-    this.gl.shaderSource(shader, source);
-    this.gl.compileShader(shader);
-
-    if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-      throw new Error(
-        "Shader compile failed: " + this.gl.getShaderInfoLog(shader),
-      );
-    }
-    return shader;
-  }
-
+  /** Создаёт общий vertexBuffer с геометрией круга */
   private initBuffers(): void {
     // Геометрия круга (32 сегмента)
     const segments = 32;
@@ -123,93 +108,77 @@ export class Engine {
     );
   }
 
-  private drawCircle(circle: Circle): void {
-    if (!this.program || !this.vertexBuffer) {
-      return;
+  /** Вспомогательный метод компиляции шейдера */
+  private createShader(type: number, source: string): WebGLShader {
+    const shader = this.gl.createShader(type);
+    if (!shader) {
+      throw new Error("Failed to create shader");
     }
 
-    const segments = 32;
-    const color = circle.color;
+    this.gl.shaderSource(shader, source);
+    this.gl.compileShader(shader);
 
-    // Создаем буфер цветов
-    const colors: number[] = [];
-    colors.push(color[0], color[1], color[2]); // Центр
-    for (let i = 0; i <= segments; i++) {
-      colors.push(color[0], color[1], color[2]);
+    if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+      throw new Error(
+        "Shader compile failed: " + this.gl.getShaderInfoLog(shader),
+      );
     }
-
-    const colorBuffer = this.gl.createBuffer();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, colorBuffer);
-    this.gl.bufferData(
-      this.gl.ARRAY_BUFFER,
-      new Float32Array(colors),
-      this.gl.DYNAMIC_DRAW,
-    );
-
-    this.gl.useProgram(this.program);
-
-    // Позиция
-    const positionLoc = this.gl.getAttribLocation(this.program, "a_position");
-    this.gl.enableVertexAttribArray(positionLoc);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-    this.gl.vertexAttribPointer(positionLoc, 2, this.gl.FLOAT, false, 0, 0);
-
-    // Цвет
-    const colorLoc = this.gl.getAttribLocation(this.program, "a_color");
-    this.gl.enableVertexAttribArray(colorLoc);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, colorBuffer);
-    this.gl.vertexAttribPointer(colorLoc, 3, this.gl.FLOAT, false, 0, 0);
-
-    // Uniforms
-    const resolutionLoc = this.gl.getUniformLocation(
-      this.program,
-      "u_resolution",
-    );
-    const translationLoc = this.gl.getUniformLocation(
-      this.program,
-      "u_translation",
-    );
-    const scaleLoc = this.gl.getUniformLocation(this.program, "u_scale");
-
-    this.gl.uniform2f(resolutionLoc, this.canvas.width, this.canvas.height);
-    this.gl.uniform2f(translationLoc, circle.position.x, circle.position.y);
-    this.gl.uniform1f(scaleLoc, circle.radius);
-
-    // Рисуем
-    this.gl.drawArrays(this.gl.TRIANGLE_FAN, 0, segments + 2);
-
-    // Очищаем
-    this.gl.deleteBuffer(colorBuffer);
+    return shader;
   }
 
+  /** Добавляет круг в симуляцию */
+  public addCircle(circle: Circle): void {
+    this.circles.push(circle);
+  }
+
+  /** Удаляет все круги */
+  public clearCircles(): void {
+    this.circles = [];
+  }
+
+  /** Запускает симуляцию: добавляет canvas в DOM и стартует игровой цикл */
   public start(): void {
     document.body.appendChild(this.canvas);
-
     this.resize();
+    this.lastTime = performance.now();
+    requestAnimationFrame(this.gameLoop);
+  }
+
+  /** Главный цикл: вычисляет deltaTime, обновляет физику, перерисовывает */
+  private gameLoop = (now: number): void => {
+    const deltaTime = (now - this.lastTime) / 1000;
+    this.lastTime = now;
+    this.update(deltaTime);
     this.clear();
+    this.draw();
+    requestAnimationFrame(this.gameLoop);
+  };
 
-    this.gameLoop();
+  /** Обновляет позиции всех кругов */
+  private update(deltaTime: number): void {
+    for (const circle of this.circles) {
+      circle.update(deltaTime);
+    }
   }
 
-  private resize(): void {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-
-    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-  }
-
+  /** Очищает canvas заданным цветом */
   private clear(): void {
     this.gl.clearColor(0.1, 0.1, 0.15, 1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
 
-  private gameLoop(): void {
-    this.clear();
-    
-    if (this.testCircle) {
-      this.drawCircle(this.testCircle);
+  /** Отрисовывает все круги */
+  private draw(): void {
+    for (const circle of this.circles) {
+      circle.draw(this.gl, this.program!, this.vertexBuffer!);
     }
+  }
 
-    requestAnimationFrame(() => this.gameLoop());
+  /** Подгоняет размер canvas под окно браузера */
+  private resize(): void {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+
+    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
 }
