@@ -145,6 +145,104 @@ export class Circle {
   }
 
   /**
+   * Разрешает упругое столкновение с другим кругом.
+   * Изменяет скорости обоих кругов с учётом масс и коэффициента восстановления.
+   * @param other Другой круг
+   * @param restitution Коэффициент упругости (0 – неупругий удар, 1 – абсолютно упругий)
+   */
+  public resolveCollision(other: Circle, restitution: number = 0.9): void {
+    // Статические объекты не меняют скорость
+    if (this.isStatic && other.isStatic) {
+      return;
+    }
+
+    const dx = this.position.x - other.position.x;
+    const dy = this.position.y - other.position.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const minDist = this.radius + other.radius;
+
+    // Если не пересекаются или нулевое расстояние – выходим
+    if (dist >= minDist || dist === 0) {
+      return;
+    }
+
+    // Нормаль столкновения (от other к this)
+    const nx = dx / dist;
+    const ny = dy / dist;
+
+    // Относительная скорость
+    const dvx = this.velocity.x - other.velocity.x;
+    const dvy = this.velocity.y - other.velocity.y;
+    const velAlongNormal = dvx * nx + dvy * ny;
+
+    // Если скорости уже разлетаются – не обрабатываем
+    if (velAlongNormal > 0) {
+      return;
+    }
+
+    // Массы (статичные объекты считаем бесконечно тяжёлыми)
+    const massA = this.isStatic ? Infinity : this.mass;
+    const massB = other.isStatic ? Infinity : other.mass;
+    const totalMass = massA + massB;
+
+    // Импульс
+    const impulse = (2 * velAlongNormal) / totalMass;
+
+    // Обновление скоростей
+    if (!this.isStatic) {
+      this.velocity.x -= impulse * massB * nx * restitution;
+      this.velocity.y -= impulse * massB * ny * restitution;
+    }
+    if (!other.isStatic) {
+      other.velocity.x += impulse * massA * nx * restitution;
+      other.velocity.y += impulse * massA * ny * restitution;
+    }
+
+    // Коррекция позиций, чтобы круги не залипали
+    const overlap = minDist - dist;
+    const correctionX = (overlap * nx) / 2;
+    const correctionY = (overlap * ny) / 2;
+    if (!this.isStatic) {
+      this.position.x += correctionX;
+      this.position.y += correctionY;
+    }
+    if (!other.isStatic) {
+      other.position.x -= correctionX;
+      other.position.y -= correctionY;
+    }
+  }
+
+  /**
+   * Удерживает круг внутри прямоугольной области [0, width] x [0, height],
+   * отражая скорость при выходе за границы.
+   * @param width Ширина области
+   * @param height Высота области
+   */
+  public constrainToBounds(width: number, height: number): void {
+    if (this.isStatic) {
+      return;
+    }
+
+    const r = this.radius;
+
+    if (this.position.x - r < 0) {
+      this.position.x = r;
+      this.velocity.x = Math.abs(this.velocity.x);
+    } else if (this.position.x + r > width) {
+      this.position.x = width - r;
+      this.velocity.x = -Math.abs(this.velocity.x);
+    }
+
+    if (this.position.y - r < 0) {
+      this.position.y = r;
+      this.velocity.y = Math.abs(this.velocity.y);
+    } else if (this.position.y + r > height) {
+      this.position.y = height - r;
+      this.velocity.y = -Math.abs(this.velocity.y);
+    }
+  }
+
+  /**
    * Сериализация для сохранения состояния
    */
   toJSON() {

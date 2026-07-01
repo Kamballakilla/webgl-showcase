@@ -164,8 +164,24 @@ export class Engine {
 
   /** Обновляет позиции всех кругов */
   private update(deltaTime: number): void {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    // Обновляем позиции и границы
     for (const circle of this.circles) {
       circle.update(deltaTime);
+      circle.constrainToBounds(w, h);
+    }
+
+    // Обрабатываем столкновения между кругами
+    for (let i = 0; i < this.circles.length; i++) {
+      for (let j = i + 1; j < this.circles.length; j++) {
+        const a = this.circles[i];
+        const b = this.circles[j];
+        if (a.collidesWith(b)) {
+          a.resolveCollision(b);
+        }
+      }
     }
   }
 
